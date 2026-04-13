@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+postgres-data/
+coverage/
+frontend/node_modules/
+frontend/dist/
+*.js.map
