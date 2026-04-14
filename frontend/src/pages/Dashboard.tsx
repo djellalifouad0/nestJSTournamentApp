@@ -6,20 +6,9 @@ import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
 interface Tournament {
-  id: string;
-  name: string;
-  game: string;
-  maxPlayers: number;
-  status: string;
-  startDate: string;
-  players: { id: string }[];
+  id: string; name: string; game: string; maxPlayers: number;
+  status: string; startDate: string; players: { id: string }[];
 }
-
-const statusConfig: Record<string, { color: string; bg: string; dot: string }> = {
-  pending: { color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/30', dot: 'bg-yellow-400' },
-  in_progress: { color: 'text-cyan-400', bg: 'bg-cyan-500/10 border-cyan-500/30', dot: 'bg-cyan-400' },
-  completed: { color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/30', dot: 'bg-green-400' },
-};
 
 export function Dashboard() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -31,179 +20,133 @@ export function Dashboard() {
   const [startDate, setStartDate] = useState('');
   const { isAuthenticated } = useAuth();
 
-  const loadTournaments = async () => {
-    try {
-      const res = await tournamentsApi.getAll(statusFilter || undefined);
-      setTournaments(res.data.data);
-    } catch {
-      toast.error('Failed to load tournaments');
-    }
+  const load = async () => {
+    try { const res = await tournamentsApi.getAll(statusFilter || undefined); setTournaments(res.data.data); }
+    catch { toast.error('Failed to load.'); }
   };
-
-  useEffect(() => {
-    loadTournaments();
-  }, [statusFilter]);
+  useEffect(() => { load(); }, [statusFilter]);
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
     try {
       await tournamentsApi.create({ name, game, maxPlayers, startDate });
-      toast.success('Tournament created!');
-      setShowCreate(false);
-      setName(''); setGame(''); setMaxPlayers(8); setStartDate('');
-      loadTournaments();
-    } catch {
-      toast.error('Failed to create tournament');
-    }
+      toast.success('Tournament created.');
+      setShowCreate(false); setName(''); setGame(''); setMaxPlayers(8); setStartDate('');
+      load();
+    } catch { toast.error('Failed.'); }
+  };
+
+  const filters = [
+    { val: '', label: 'All' },
+    { val: 'pending', label: 'Open' },
+    { val: 'in_progress', label: 'Live' },
+    { val: 'completed', label: 'Done' },
+  ];
+
+  const statusTag = (s: string) => {
+    if (s === 'in_progress') return <span className="tag tag-hot">Live</span>;
+    if (s === 'completed') return <span className="tag tag-ice">Done</span>;
+    return <span className="tag tag-volt">Open</span>;
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)]">
-      {/* Hero section */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-purple-900/20 to-transparent pb-8">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-purple-600/10 rounded-full blur-3xl" />
-        </div>
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-12 pb-4 relative">
-          <h1 className="text-4xl md:text-5xl font-black text-white glow-text-purple mb-3">
-            Tournaments
+    <div className="min-h-[calc(100vh-3.5rem)]">
+      {/* Hero */}
+      <div className="border-b border-ridge bg-slab">
+        <div className="max-w-[1400px] mx-auto px-6 py-16">
+          <h1 className="font-display font-extrabold text-6xl md:text-8xl text-chalk tracking-tighter leading-none">
+            Tourn<span className="text-volt">a</span>ments
           </h1>
-          <p className="text-gray-400 text-lg max-w-xl">
-            Compete in epic tournaments. Prove your skills. Rise to the top.
-          </p>
-
-          {/* Stats bar */}
-          <div className="flex flex-wrap gap-6 mt-8">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-              <span className="text-sm text-gray-400">
-                <span className="text-white font-semibold">{tournaments.filter(t => t.status === 'pending').length}</span> Open
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-              <span className="text-sm text-gray-400">
-                <span className="text-white font-semibold">{tournaments.filter(t => t.status === 'in_progress').length}</span> Live
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="text-sm text-gray-400">
-                <span className="text-white font-semibold">{tournaments.filter(t => t.status === 'completed').length}</span> Completed
-              </span>
-            </div>
+          <div className="mt-4 flex items-center gap-6 text-xs font-mono">
+            <span className="text-volt font-bold">{tournaments.filter(t => t.status === 'pending').length} Open</span>
+            <span className="text-hot font-bold">{tournaments.filter(t => t.status === 'in_progress').length} Live</span>
+            <span className="text-ice font-bold">{tournaments.filter(t => t.status === 'completed').length} Done</span>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 pb-12">
+      <div className="max-w-[1400px] mx-auto px-6 py-8">
         {/* Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div className="flex gap-2">
-            {['', 'pending', 'in_progress', 'completed'].map((s) => (
+          <div className="flex gap-1">
+            {filters.map((f) => (
               <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  statusFilter === s
-                    ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
-                    : 'bg-surface text-gray-400 hover:bg-surface-light hover:text-white'
+                key={f.val}
+                onClick={() => setStatusFilter(f.val)}
+                className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 border transition-colors ${
+                  statusFilter === f.val
+                    ? 'border-volt text-volt bg-volt/5'
+                    : 'border-ridge text-smoke hover:border-chalk hover:text-chalk'
                 }`}
               >
-                {s === '' ? 'All' : s === 'in_progress' ? 'Live' : s.charAt(0).toUpperCase() + s.slice(1)}
+                {f.label}
               </button>
             ))}
           </div>
-
           {isAuthenticated && (
-            <button
-              onClick={() => setShowCreate(!showCreate)}
-              className="px-5 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-600 text-white text-sm font-semibold hover:from-purple-500 hover:to-cyan-500 transition-all shadow-lg shadow-purple-500/20"
-            >
-              + New Tournament
+            <button onClick={() => setShowCreate(!showCreate)} className="btn btn-volt text-[10px]">
+              + New
             </button>
           )}
         </div>
 
         {/* Create form */}
         {showCreate && (
-          <form onSubmit={handleCreate} className="glass rounded-2xl p-6 mb-8 animate-fade-in">
-            <h3 className="text-lg font-bold text-white mb-4">Create Tournament</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form onSubmit={handleCreate} className="card p-6 mb-8 anim-slide-up">
+            <h3 className="font-display font-bold text-lg text-chalk mb-4">New Tournament</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">Name</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-bg border border-purple-500/20 text-white text-sm" placeholder="Tournament name" required />
+                <label className="text-[10px] font-bold uppercase tracking-widest text-smoke mb-1 block">Name</label>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full" placeholder="Tournament name" required />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">Game</label>
-                <input type="text" value={game} onChange={(e) => setGame(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-bg border border-purple-500/20 text-white text-sm" placeholder="e.g. League of Legends" required />
+                <label className="text-[10px] font-bold uppercase tracking-widest text-smoke mb-1 block">Game</label>
+                <input type="text" value={game} onChange={(e) => setGame(e.target.value)} className="w-full" placeholder="Game title" required />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">Max Players</label>
-                <input type="number" value={maxPlayers} onChange={(e) => setMaxPlayers(Number(e.target.value))}
-                  className="w-full px-4 py-2.5 rounded-lg bg-bg border border-purple-500/20 text-white text-sm" min={2} required />
+                <label className="text-[10px] font-bold uppercase tracking-widest text-smoke mb-1 block">Max Players</label>
+                <input type="number" value={maxPlayers} onChange={(e) => setMaxPlayers(Number(e.target.value))} className="w-full" min={2} required />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1">Start Date</label>
-                <input type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-bg border border-purple-500/20 text-white text-sm" required />
+                <label className="text-[10px] font-bold uppercase tracking-widest text-smoke mb-1 block">Start Date</label>
+                <input type="datetime-local" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full" required />
               </div>
             </div>
-            <div className="flex gap-3 mt-5">
-              <button type="submit" className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-cyan-600 text-white text-sm font-semibold">
-                Create
-              </button>
-              <button type="button" onClick={() => setShowCreate(false)} className="px-6 py-2 rounded-lg bg-surface-light text-gray-400 text-sm">
-                Cancel
-              </button>
+            <div className="flex gap-2 mt-4">
+              <button type="submit" className="btn btn-volt text-[10px]">Create</button>
+              <button type="button" onClick={() => setShowCreate(false)} className="btn btn-ghost text-[10px]">Cancel</button>
             </div>
           </form>
         )}
 
-        {/* Tournament grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {tournaments.map((t, i) => {
-            const cfg = statusConfig[t.status] ?? statusConfig.pending;
             const fill = t.players?.length ?? 0;
             const pct = Math.round((fill / t.maxPlayers) * 100);
             return (
               <Link
                 key={t.id}
                 to={`/tournaments/${t.id}`}
-                className="glass rounded-xl p-5 hover:border-purple-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10 group animate-fade-in"
-                style={{ animationDelay: `${i * 50}ms` }}
+                className="card p-5 block anim-slide-up"
+                style={{ animationDelay: `${i * 60}ms` }}
               >
-                {/* Status badge */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${cfg.bg}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                    <span className={cfg.color}>{t.status === 'in_progress' ? 'LIVE' : t.status.toUpperCase()}</span>
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {new Date(t.startDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                <div className="flex items-start justify-between mb-4">
+                  {statusTag(t.status)}
+                  <span className="text-[10px] font-mono text-ridge">
+                    {new Date(t.startDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </span>
                 </div>
 
-                {/* Title */}
-                <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors mb-1">
-                  {t.name}
-                </h3>
-                <p className="text-sm text-gray-400 mb-4">{t.game}</p>
+                <h3 className="font-display font-bold text-xl text-chalk leading-tight mb-1">{t.name}</h3>
+                <p className="text-xs font-mono text-smoke mb-5">{t.game}</p>
 
-                {/* Progress bar */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-gray-400">Players</span>
-                    <span className="text-white font-medium">{fill}/{t.maxPlayers}</span>
-                  </div>
-                  <div className="h-1.5 bg-bg rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-purple-500 to-cyan-400 transition-all duration-500"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
+                <div className="flex items-center justify-between text-[10px] font-mono text-smoke mb-1.5">
+                  <span>Players</span>
+                  <span className="text-chalk font-bold">{fill}<span className="text-ridge">/{t.maxPlayers}</span></span>
+                </div>
+                <div className="bar-track">
+                  <div className={`bar-fill ${t.status === 'in_progress' ? 'bar-fill-hot' : ''}`} style={{ width: `${pct}%` }} />
                 </div>
               </Link>
             );
@@ -211,10 +154,9 @@ export function Dashboard() {
         </div>
 
         {tournaments.length === 0 && (
-          <div className="text-center py-20">
-            <div className="text-5xl mb-4 opacity-30">&#x1F3C6;</div>
-            <p className="text-gray-500 text-lg">No tournaments found</p>
-            <p className="text-gray-600 text-sm mt-1">Be the first to create one!</p>
+          <div className="text-center py-24">
+            <div className="font-display font-extrabold text-6xl text-ridge mb-4">0</div>
+            <p className="text-smoke text-xs font-mono">No tournaments found.</p>
           </div>
         )}
       </div>

@@ -3,10 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { playersApi } from '../api/players';
 import toast from 'react-hot-toast';
 
-interface Stats {
-  playerId: string; username: string; wins: number; losses: number;
-  winRate: number; tournamentsPlayed: number; tournamentsWon: number;
-}
+interface Stats { playerId: string; username: string; wins: number; losses: number; winRate: number; tournamentsPlayed: number; tournamentsWon: number; }
 interface Tournament { id: string; name: string; game: string; status: string; }
 
 export function PlayerProfile() {
@@ -17,140 +14,94 @@ export function PlayerProfile() {
 
   useEffect(() => {
     if (!id) return;
-    const load = async () => {
+    (async () => {
       try {
-        const [sRes, tRes] = await Promise.all([
-          playersApi.getStats(id),
-          playersApi.getTournaments(id),
-        ]);
-        setStats(sRes.data.data);
-        setTournaments(tRes.data.data);
-      } catch {
-        toast.error('Failed to load player data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+        const [sR, tR] = await Promise.all([playersApi.getStats(id), playersApi.getTournaments(id)]);
+        setStats(sR.data.data); setTournaments(tR.data.data);
+      } catch { toast.error('Failed.'); }
+      finally { setLoading(false); }
+    })();
   }, [id]);
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="w-10 h-10 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  );
-
-  if (!stats) return <div className="text-center py-20 text-gray-500">Player not found.</div>;
+  if (loading) return <div className="flex items-center justify-center min-h-[60vh] text-smoke text-xs font-mono">Loading...</div>;
+  if (!stats) return <div className="text-center py-24 text-smoke text-xs font-mono">Not found.</div>;
 
   const total = stats.wins + stats.losses;
-  const winPct = total > 0 ? Math.round(stats.winRate * 100) : 0;
+  const pct = total > 0 ? Math.round(stats.winRate * 100) : 0;
 
   return (
-    <div className="min-h-[calc(100vh-4rem)]">
+    <div className="min-h-[calc(100vh-3.5rem)]">
       {/* Header */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-purple-900/30 to-transparent">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-purple-600/10 rounded-full blur-3xl" />
-        </div>
-
-        <div className="max-w-4xl mx-auto px-4 lg:px-8 pt-12 pb-8 relative">
+      <div className="border-b border-ridge bg-slab">
+        <div className="max-w-[1000px] mx-auto px-6 py-12">
           <div className="flex items-center gap-6">
-            {/* Avatar */}
-            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-4xl font-black text-white shadow-xl shadow-purple-500/20">
+            <div className="w-20 h-20 bg-volt text-ink flex items-center justify-center font-display font-extrabold text-4xl shrink-0">
               {stats.username[0].toUpperCase()}
             </div>
             <div>
-              <h1 className="text-3xl font-black text-white glow-text-purple">{stats.username}</h1>
-              <p className="text-gray-400 mt-1">
-                {stats.tournamentsPlayed} tournaments played
+              <h1 className="font-display font-extrabold text-4xl text-chalk tracking-tight">{stats.username}</h1>
+              <div className="flex items-center gap-4 mt-2 text-xs font-mono">
+                <span className="text-smoke">{stats.tournamentsPlayed} tournaments</span>
                 {stats.tournamentsWon > 0 && (
-                  <span className="ml-2 text-yellow-400">&#x1F3C6; {stats.tournamentsWon} won</span>
+                  <span className="tag tag-volt">{stats.tournamentsWon} won</span>
                 )}
-              </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 lg:px-8 pb-12">
+      <div className="max-w-[1000px] mx-auto px-6 py-8">
         {/* Stats grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 -mt-4 relative z-10 mb-8">
-          <div className="glass rounded-xl p-5 text-center">
-            <div className="text-3xl font-black text-green-400">{stats.wins}</div>
-            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wider">Victories</div>
-          </div>
-          <div className="glass rounded-xl p-5 text-center">
-            <div className="text-3xl font-black text-red-400">{stats.losses}</div>
-            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wider">Defeats</div>
-          </div>
-          <div className="glass rounded-xl p-5 text-center">
-            <div className="text-3xl font-black text-cyan-400">{winPct}%</div>
-            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wider">Win Rate</div>
-          </div>
-          <div className="glass rounded-xl p-5 text-center">
-            <div className="text-3xl font-black text-yellow-400">{stats.tournamentsWon}</div>
-            <div className="text-xs text-gray-400 mt-1 uppercase tracking-wider">Trophies</div>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          {[
+            { label: 'Wins', val: String(stats.wins), color: 'text-volt' },
+            { label: 'Losses', val: String(stats.losses), color: 'text-hot' },
+            { label: 'Win Rate', val: `${pct}%`, color: 'text-ice' },
+            { label: 'Trophies', val: String(stats.tournamentsWon), color: 'text-volt' },
+          ].map((s) => (
+            <div key={s.label} className="border border-ridge p-5 bg-slab text-center">
+              <div className={`stat-number text-4xl ${s.color}`}>{s.val}</div>
+              <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-smoke mt-2">{s.label}</div>
+            </div>
+          ))}
         </div>
 
-        {/* Win rate visual */}
+        {/* Win rate bar */}
         {total > 0 && (
-          <div className="glass rounded-xl p-6 mb-8">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-gray-300">Performance</span>
-              <span className="text-sm text-gray-400">{stats.wins}W - {stats.losses}L</span>
+          <div className="border border-ridge p-5 bg-slab mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-smoke">Performance</span>
+              <span className="text-xs font-mono text-chalk">{stats.wins}W — {stats.losses}L</span>
             </div>
-            <div className="h-3 rounded-full overflow-hidden flex bg-red-500/20">
-              <div
-                className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-1000 rounded-l-full"
-                style={{ width: `${winPct}%` }}
-              />
-            </div>
-            <div className="flex justify-between mt-2 text-xs text-gray-500">
-              <span>0%</span>
-              <span>50%</span>
-              <span>100%</span>
+            <div className="h-2 bg-hot/20 overflow-hidden">
+              <div className="h-full bg-volt transition-all duration-700" style={{ width: `${pct}%` }} />
             </div>
           </div>
         )}
 
-        {/* Tournaments */}
-        <div className="glass rounded-xl p-6">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <span>&#x1F3C6;</span> Tournament History
-          </h2>
-          <div className="space-y-2">
-            {tournaments.map((t) => {
-              const statusColor: Record<string, string> = {
-                pending: 'text-yellow-400 bg-yellow-500/10',
-                in_progress: 'text-cyan-400 bg-cyan-500/10',
-                completed: 'text-green-400 bg-green-500/10',
-              };
-              return (
-                <Link
-                  key={t.id}
-                  to={`/tournaments/${t.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-light transition-colors group"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-surface-lighter flex items-center justify-center text-xs shrink-0">
-                      &#x1F3AE;
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-200 group-hover:text-white truncate">{t.name}</div>
-                      <div className="text-xs text-gray-500">{t.game}</div>
-                    </div>
-                  </div>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${statusColor[t.status] ?? ''}`}>
-                    {t.status === 'in_progress' ? 'LIVE' : t.status}
-                  </span>
-                </Link>
-              );
-            })}
-            {tournaments.length === 0 && (
-              <p className="text-center text-gray-500 py-8">No tournament history yet.</p>
-            )}
+        {/* Tournament history */}
+        <div className="border border-ridge bg-slab">
+          <div className="px-5 py-4 border-b border-ridge">
+            <h2 className="font-display font-bold text-sm text-chalk">Tournament History</h2>
           </div>
+          {tournaments.map((t) => {
+            const stag = t.status === 'in_progress' ? 'tag-hot' : t.status === 'completed' ? 'tag-ice' : 'tag-volt';
+            const slabel = t.status === 'in_progress' ? 'Live' : t.status === 'completed' ? 'Done' : 'Open';
+            return (
+              <Link key={t.id} to={`/tournaments/${t.id}`}
+                className="flex items-center justify-between px-5 py-3 border-b border-ridge/50 hover:bg-pit transition-colors group">
+                <div>
+                  <span className="text-sm font-mono text-chalk group-hover:text-volt transition-colors">{t.name}</span>
+                  <span className="text-[10px] font-mono text-ridge ml-3">{t.game}</span>
+                </div>
+                <span className={`tag ${stag}`}>{slabel}</span>
+              </Link>
+            );
+          })}
+          {tournaments.length === 0 && (
+            <div className="px-5 py-8 text-center text-xs font-mono text-ridge">No history yet.</div>
+          )}
         </div>
       </div>
     </div>

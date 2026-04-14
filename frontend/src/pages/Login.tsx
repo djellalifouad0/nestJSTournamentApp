@@ -18,82 +18,102 @@ export function Login() {
     try {
       const res = await authApi.login({ email, password });
       login(res.data.data.access_token);
-      toast.success('Welcome back!');
+      toast.success('Authenticated.');
       navigate('/');
     } catch {
-      toast.error('Invalid credentials');
+      toast.error('Invalid credentials.');
     } finally {
       setLoading(false);
     }
   };
 
+  const testAccounts = [
+    { role: 'ADMIN', email: 'admin@tournament.gg', pw: 'admin123' },
+    { role: 'PLAYER', email: 'player@tournament.gg', pw: 'player123' },
+    { role: 'VIEWER', email: 'viewer@tournament.gg', pw: 'viewer123' },
+  ];
+
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 bg-animated">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl" />
+    <div className="min-h-[calc(100vh-3.5rem)] flex">
+      {/* Left - branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-slab items-center justify-center relative scanlines">
+        <div className="text-center px-12">
+          <div className="font-display font-extrabold text-[120px] leading-none text-volt tracking-tighter">
+            TM
+          </div>
+          <div className="mt-4 text-smoke text-xs uppercase tracking-[0.3em] font-mono font-bold">
+            Tournament Manager
+          </div>
+          <div className="mt-8 w-24 h-px bg-ridge mx-auto" />
+          <div className="mt-8 text-ridge text-xs font-mono max-w-xs mx-auto leading-relaxed">
+            Compete. Climb. Conquer.<br />
+            The arena awaits.
+          </div>
+        </div>
       </div>
 
-      <div className="w-full max-w-md relative animate-fade-in">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 to-cyan-500 mb-4 shadow-lg shadow-purple-500/30">
-            <span className="text-2xl">&#x1F3AE;</span>
-          </div>
-          <h1 className="text-3xl font-bold text-white glow-text-purple">Welcome Back</h1>
-          <p className="text-gray-400 mt-2">Sign in to manage your tournaments</p>
-        </div>
+      {/* Right - form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm anim-slide-up">
+          <h1 className="font-display font-extrabold text-4xl text-chalk mb-1">
+            Sign In<span className="text-volt">.</span>
+          </h1>
+          <p className="text-smoke text-xs font-mono mb-8">Access your account</p>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="glass rounded-2xl p-8 space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-bg border border-purple-500/20 text-white placeholder-gray-500 transition-all"
-              placeholder="your@email.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-bg border border-purple-500/20 text-white placeholder-gray-500 transition-all"
-              placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-purple-500 text-white font-semibold hover:from-purple-500 hover:to-purple-400 transition-all shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Signing in...
-              </span>
-            ) : (
-              'Sign In'
-            )}
-          </button>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-smoke mb-1.5 block">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full"
+                placeholder="you@email.com"
+                required
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-smoke mb-1.5 block">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <button type="submit" disabled={loading} className="btn btn-volt w-full disabled:opacity-40">
+              {loading ? 'Authenticating...' : 'Enter'}
+            </button>
+          </form>
 
-          <p className="text-center text-gray-400 text-sm pt-2">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-purple-400 hover:text-purple-300 font-medium transition-colors">
-              Create one
-            </Link>
+          <p className="text-smoke text-xs font-mono mt-6">
+            No account?{' '}
+            <Link to="/register" className="text-volt hover:underline">Create one</Link>
           </p>
-        </form>
+
+          {/* Test accounts */}
+          <div className="mt-10 pt-6 border-t border-ridge">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-smoke mb-3">
+              Test Accounts
+            </div>
+            <div className="space-y-1.5">
+              {testAccounts.map((acc) => (
+                <button
+                  key={acc.role}
+                  type="button"
+                  onClick={() => { setEmail(acc.email); setPassword(acc.pw); }}
+                  className="w-full flex items-center gap-3 p-2 border border-ridge hover:border-volt transition-colors text-left group"
+                >
+                  <span className="tag tag-volt">{acc.role}</span>
+                  <span className="text-xs text-smoke font-mono flex-1 truncate">{acc.email}</span>
+                  <span className="text-[9px] text-ridge group-hover:text-volt transition-colors font-mono">FILL →</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
