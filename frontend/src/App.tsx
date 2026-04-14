@@ -11,11 +11,12 @@ import { PlayerProfile } from './pages/PlayerProfile';
 import { Games } from './pages/Games';
 import { Leaderboard } from './pages/Leaderboard';
 import { useWebSocket } from './hooks/useWebSocket';
+import { useTheme } from './hooks/useTheme';
 
 function AppContent() {
   useWebSocket();
   return (
-    <div className="min-h-screen bg-ink">
+    <div className="min-h-screen bg-ink transition-colors duration-300">
       <Navbar />
       <Routes>
         <Route path="/login" element={<Login />} />
@@ -31,6 +32,7 @@ function AppContent() {
 }
 
 function App() {
+  const { isDark } = useTheme();
   return (
     <BrowserRouter>
       <AuthProvider>
@@ -38,15 +40,25 @@ function App() {
           position="top-right"
           toastOptions={{
             style: {
-              background: '#141414',
-              color: '#E0E0E0',
-              border: '1px solid #2A2A2A',
+              background: isDark ? '#141414' : '#EAE6DC',
+              color: isDark ? '#E0E0E0' : '#1A1814',
+              border: `1px solid ${isDark ? '#2A2A2A' : '#C8C2B4'}`,
               borderRadius: '0',
               fontSize: '12px',
               fontFamily: "'Space Mono', monospace",
             },
-            success: { iconTheme: { primary: '#CDFF00', secondary: '#0A0A0A' } },
-            error: { iconTheme: { primary: '#FF3333', secondary: '#0A0A0A' } },
+            success: {
+              iconTheme: {
+                primary: isDark ? '#CDFF00' : '#8BA600',
+                secondary: isDark ? '#0A0A0A' : '#F5F2EB',
+              },
+            },
+            error: {
+              iconTheme: {
+                primary: isDark ? '#FF3333' : '#CC2222',
+                secondary: isDark ? '#0A0A0A' : '#F5F2EB',
+              },
+            },
           }}
         />
         <AppContent />
